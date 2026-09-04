@@ -163,6 +163,7 @@ require([
     form.append("f", "json");
     form.append("token", credential.token);
     form.append("title", sourceTitle.value.trim() || file.name);
+    form.append("type", "File");
     form.append("tags", config.sourceTags);
     form.append("filename", file.name);
     form.append("file", file, file.name);
@@ -170,6 +171,7 @@ require([
     const url = `${config.portalUrl}/sharing/rest/content/users/${encodeURIComponent(portal.user.username)}/addItem`;
     const response = await fetch(url, { method: "POST", body: form });
     const json = await response.json();
+    console.log(json);
     if (!response.ok || json.error || !json.success || !json.id) {
       throw new Error(json.error?.message || `TIFF upload failed: ${JSON.stringify(json)}`);
     }
