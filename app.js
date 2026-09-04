@@ -41,47 +41,9 @@ require([
   publishButton.addEventListener("click", publishWorkflow);
   fileInput.addEventListener("change", onFileSelected);
 
-  initializeAuthentication();
-  
-  async function initializeAuthentication() {
-  
-    try {
-  
-      const existingCredential =
-        esriId.findCredential(
-          `${config.portalUrl}/sharing`
-        );
-  
-      if (existingCredential) {
-  
-        credential = existingCredential;
-  
-        portal = new Portal({
-          url: config.portalUrl,
-          authMode: "immediate"
-        });
-  
-        await portal.load();
-  
-        setSignedIn();
-  
-        setStatus(
-          "Using existing ArcGIS Online session.",
-          "success"
-        );
-  
-        return;
-      }
-  
-      setSignedOut();
-  
-    } catch (error) {
-  
-      console.error(error);
-  
-      setSignedOut();
-    }
-  }
+  esriId.checkSignInStatus(`${config.portalUrl}/sharing`)
+    .then(() => signIn(false))
+    .catch(() => setSignedOut());
 
   function assertConfigured() {
     const missing = [];
