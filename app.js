@@ -163,7 +163,6 @@ require([
     form.append("f", "json");
     form.append("token", credential.token);
     form.append("title", sourceTitle.value.trim() || file.name);
-    form.append("type", "GeoTIFF");
     form.append("tags", config.sourceTags);
     form.append("filename", file.name);
     form.append("file", file, file.name);
