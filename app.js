@@ -29,7 +29,10 @@ require([
     appId: config.clientId,
     portalUrl: config.portalUrl,
     popup: true,
-    flowType: "authorization-code"
+    flowType: "authorization-code",
+    popupCallbackUrl:
+      window.location.origin +
+      "/UploadTIFFtoArcGISOnline/oauth-callback.html"
   });
   esriId.registerOAuthInfos([oauthInfo]);
 
