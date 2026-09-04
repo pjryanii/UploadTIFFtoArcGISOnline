@@ -160,13 +160,30 @@ require([
 
   async function uploadSourceItem(file) {
     const form = new FormData();
+    
     form.append("f", "json");
     form.append("token", credential.token);
-    form.append("title", sourceTitle.value.trim() || file.name);
-    form.append("type", "File");
-    form.append("tags", config.sourceTags);
-    form.append("filename", file.name);
-    form.append("file", file, file.name);
+    
+    form.append(
+      "title",
+      sourceTitle.value.trim() || file.name
+    );
+    
+    form.append(
+      "type",
+      "Image"
+    );
+
+form.append(
+  "tags",
+  config.sourceTags
+);
+
+form.append(
+  "file",
+  file,
+  file.name
+);
 
     const url = `${config.portalUrl}/sharing/rest/content/users/${encodeURIComponent(portal.user.username)}/addItem`;
     const response = await fetch(url, { method: "POST", body: form });
