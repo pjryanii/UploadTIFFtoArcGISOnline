@@ -5,7 +5,7 @@ window.APP_CONFIG = {
 
   // Full REST URL of the published Notebook Web Tool task.
   // It normally ends with /GPServer/<TaskName>.
-  webToolUrl: "https://notebookswebtools6.arcgis.com/arcgis/rest/services/ea0a88ca300e45ab9e6b8e04e622108c/GPServer",
+  webToolUrl: "https://notebookswebtools6.arcgis.com/arcgis/rest/services/ea0a88ca300e45ab9e6b8e04e622108c/GPServer/Notebook_-_Publish_TIFF_to_ArcGIS_Online/",
 
   portalUrl: "https://lo-doun.maps.arcgis.com",
 
