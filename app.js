@@ -188,7 +188,12 @@ form.append(
     const url = `${config.portalUrl}/sharing/rest/content/users/${encodeURIComponent(portal.user.username)}/addItem`;
     const response = await fetch(url, { method: "POST", body: form });
     const json = await response.json();
-    console.log(json);
+    console.log(json)
+    setStatus(
+      JSON.stringify(json, null, 2),
+      "info"
+    );;
+    console.log("addItem response", json);
     if (!response.ok || json.error || !json.success || !json.id) {
       throw new Error(json.error?.message || `TIFF upload failed: ${JSON.stringify(json)}`);
     }
