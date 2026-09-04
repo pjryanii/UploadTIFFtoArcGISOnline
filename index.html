@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Publish TIFF to ArcGIS Online</title>
+  <link rel="stylesheet" href="https://js.arcgis.com/calcite-components/3.2.1/calcite.css" />
+  <script type="module" src="https://js.arcgis.com/calcite-components/3.2.1/calcite.esm.js"></script>
+  <script src="https://js.arcgis.com/4.33/"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <calcite-shell>
+    <div slot="header" class="header">
+      <div>
+        <h1>Publish TIFF to ArcGIS Online</h1>
+        <p>Upload a local TIFF and update the persistent hosted imagery layer.</p>
+      </div>
+      <div class="auth-controls">
+        <span id="userLabel">Not signed in</span>
+        <calcite-button id="signInButton" icon-start="sign-in">Sign in</calcite-button>
+        <calcite-button id="signOutButton" appearance="outline" icon-start="sign-out" hidden>Sign out</calcite-button>
+      </div>
+    </div>
+
+    <main class="main">
+      <calcite-card class="card">
+        <span slot="title">TIFF upload</span>
+        <span slot="subtitle">Choose one .tif or .tiff file from your computer.</span>
+
+        <div class="form-grid">
+          <label for="fileInput">Local TIFF file</label>
+          <input id="fileInput" type="file" accept=".tif,.tiff,image/tiff" disabled />
+
+          <label for="sourceTitle">Temporary source item title</label>
+          <calcite-input id="sourceTitle" value="Uploaded TIFF Source" disabled></calcite-input>
+
+          <calcite-label layout="inline">
+            <calcite-checkbox id="deleteSource" checked disabled></calcite-checkbox>
+            Delete the temporary TIFF item after the web tool succeeds
+          </calcite-label>
+
+          <calcite-button id="publishButton" width="full" icon-start="upload" disabled>
+            Upload and publish
+          </calcite-button>
+        </div>
+      </calcite-card>
+
+      <calcite-card class="card">
+        <span slot="title">Status</span>
+        <calcite-progress id="progress" type="indeterminate" hidden></calcite-progress>
+        <div id="status" class="status info">Sign in to begin.</div>
+        <pre id="details" class="details" hidden></pre>
+        <div id="resultLinks" class="result-links"></div>
+      </calcite-card>
+    </main>
+  </calcite-shell>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
