@@ -7,7 +7,7 @@ window.APP_CONFIG = {
   // It normally ends with /GPServer/<TaskName>.
   webToolUrl: "https://notebookswebtools6.arcgis.com/arcgis/rest/services/ea0a88ca300e45ab9e6b8e04e622108c/GPServer",
 
-  portalUrl: "https://lo-doun.maps.arcgis.com/",
+  portalUrl: "https://lo-doun.maps.arcgis.com",
 
   // Must match the Notebook Web Tool input variable name.
   webToolFileParameter: "input_tif_file",
