@@ -260,72 +260,127 @@ form.append(
     const outputs = {};
     const results = job.results || {};
   
+    const taskUrl = stripSlash(config.webToolUrl);
+  
     const jobUrl =
-      `${stripSlash(config.webToolUrl)}/jobs/` +
-      `${encodeURIComponent(jobId)}`;
-
-  console.log("Completed job response:", job);
-  console.log("Available job results:", results);
-  console.log("Web tool URL:", config.webToolUrl);
-  console.log("Job URL:", jobUrl);
-
-  for (const [name, resultInfo] of Object.entries(results)) {
-    try {
-      /*
-       * ArcGIS GP result endpoint:
-       *
-       * <job-url>/results/<parameter-name>
-       *
-       * Build it directly instead of using new URL().
-       */
-      const resultUrl =
-        `${jobUrl}/results/${encodeURIComponent(name)}`;
-
-      console.log(`Result information for "${name}":`, resultInfo);
-      console.log(`Requesting result from: ${resultUrl}`);
-
-      const response = await getJson(resultUrl, {
-        f: "json",
-        token: credential.token
-      });
-
-      console.log(`Result response for "${name}":`, response);
-
-      if (response.error) {
-        throw new Error(
-          response.error.message ||
-          JSON.stringify(response.error)
+      `${taskUrl}/jobs/${encodeURIComponent(jobId)}`;
+  
+    console.log("Completed job:", job);
+    console.log("Job results:", results);
+    console.log("Task URL:", taskUrl);
+    console.log("Job URL:", jobUrl);
+  
+    for (const [name, resultInfo] of Object.entries(results)) {
+      try {
+        console.log(
+          `Result metadata for "${name}":`,
+          resultInfo
         );
-      }
-
-      if (
-        Object.prototype.hasOwnProperty.call(
-          response,
-          "value"
-        )
-      ) {
-        outputs[name] = response.value;
-      } else {
-        outputs[name] = response;
-      }
-    } catch (error) {
-      console.error(
-        `Unable to read output parameter "${name}":`,
-        error
-      );
-
-      outputs[name] = {
-        error: {
-          message: normalizeError(error)
+  
+        /*
+         * Notebook Web Tools normally return:
+         *
+         * {
+         *   "output_summary": {
+         *     "paramUrl": "results/output_summary"
+         *   }
+         * }
+         */
+        let relativeResultPath = "";
+  
+        if (
+          resultInfo &&
+          typeof resultInfo.paramUrl === "string"
+        ) {
+          relativeResultPath =
+            resultInfo.paramUrl.trim();
         }
-      };
+  
+        /*
+         * Use the output name only as a fallback.
+         */
+        if (!relativeResultPath) {
+          relativeResultPath =
+            `results/${encodeURIComponent(name)}`;
+        }
+  
+        /*
+         * Remove leading slashes so that the relative path can be
+         * safely appended to the job URL.
+         */
+        relativeResultPath =
+          relativeResultPath.replace(/^\/+/, "");
+  
+        const resultUrl =
+          `${jobUrl}/${relativeResultPath}`;
+  
+        console.log(
+          `Requesting output "${name}" from:`,
+          resultUrl
+        );
+  
+        /*
+         * Use esriRequest, which is already imported at the top of
+         * app.js, instead of the custom fetch-based getJson function.
+         */
+        const requestResult = await esriRequest(
+          resultUrl,
+          {
+            query: {
+              f: "json",
+              token: credential.token
+            },
+            responseType: "json"
+          }
+        );
+  
+        const response = requestResult.data;
+  
+        console.log(
+          `Response for "${name}":`,
+          response
+        );
+  
+        if (response.error) {
+          throw new Error(
+            response.error.message ||
+            JSON.stringify(response.error)
+          );
+        }
+  
+        if (
+          Object.prototype.hasOwnProperty.call(
+            response,
+            "value"
+          )
+        ) {
+          outputs[name] = response.value;
+        } else {
+          outputs[name] = response;
+        }
+      } catch (error) {
+        console.error(
+          `Unable to read output parameter "${name}".`,
+          error
+        );
+  
+        outputs[name] = {
+          error: {
+            message:
+              `Unable to read output parameter ` +
+              `"${name}": ${normalizeError(error)}`
+          }
+        };
+      }
     }
+  
+    console.log(
+      "Final Notebook Web Tool outputs:",
+      outputs
+    );
+  
+    return outputs;
   }
-
-  console.log("Final web tool outputs:", outputs);
-
-  return outputs;
-}
 
   async function deletePortalItem(itemId) {
     const url = `${config.portalUrl}/sharing/rest/content/users/${encodeURIComponent(portal.user.username)}/items/${encodeURIComponent(itemId)}/delete`;
