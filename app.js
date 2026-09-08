@@ -240,6 +240,16 @@ form.append(
     };
     query[config.webToolFileParameter] = inputValue;
 
+    console.log(
+  "WEB TOOL INPUT PARAMETER:",
+  query[config.webToolFileParameter]
+);
+
+console.log(
+  "FULL SUBMIT QUERY:",
+  query
+);
+    
     const response = await postForm(`${stripSlash(config.webToolUrl)}/submitJob`, query);
     if (response.error) throw new Error(response.error.message || JSON.stringify(response.error));
     return response;
