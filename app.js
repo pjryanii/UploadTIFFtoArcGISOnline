@@ -236,27 +236,9 @@ form.append(
     const itemUrl =
   `${config.portalUrl}/sharing/rest/content/items/${sourceItemId}`;
 
-const inputValue = JSON.stringify({
-  url: itemUrl
-});
-
-   console.log("INPUT VALUE", inputValue);
-    
-    const query = {
-      f: "json",
-      token: credential.token
-    };
-    query[config.webToolFileParameter] = inputValue;
-
-    console.log(
-  "WEB TOOL INPUT PARAMETER:",
-  query[config.webToolFileParameter]
-);
-
-console.log(
-  "FULL SUBMIT QUERY:",
-  query
-);
+query[
+  config.webToolFileParameter
+] = sourceItemId;
     
     const response = await postForm(`${stripSlash(config.webToolUrl)}/submitJob`, query);
     if (response.error) throw new Error(response.error.message || JSON.stringify(response.error));
