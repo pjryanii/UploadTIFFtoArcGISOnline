@@ -186,15 +186,6 @@ console.log(
   JSON.stringify(outputs, null, 2)
 );
 
-const outputs = extractOutputsFromMessages(
-  completedJob.messages || []
-);
-
-console.log(
-  "OUTPUTS RETURNED",
-  JSON.stringify(outputs, null, 2)
-);
-
       renderOutputs(outputs);
       setStatus(outputs.output_summary || "TIFF published successfully.", "success", outputs);
       fileInput.value = "";
@@ -208,7 +199,7 @@ console.log(
     }
   }
 
-  function extractOutputsFromMessages(messages) {
+function extractOutputsFromMessages(messages) {
 
   const outputs = {};
 
@@ -218,15 +209,21 @@ console.log(
 
   function getValue(name) {
 
-    const regex = new RegExp(
-      `${name}\\s*=\\s*(.+)`
-    );
+    const lines = allText.split("\n");
 
-    const match = allText.match(regex);
+    for (const line of lines) {
 
-    return match
-      ? match[1].trim()
-      : "";
+      const prefix = `${name} =`;
+
+      if (line.trim().startsWith(prefix)) {
+
+        return line
+          .substring(prefix.length)
+          .trim();
+      }
+    }
+
+    return "";
   }
 
   outputs.output_operation =
