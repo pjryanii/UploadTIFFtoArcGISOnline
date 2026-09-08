@@ -208,6 +208,45 @@ console.log(
     }
   }
 
+  function extractOutputsFromMessages(messages) {
+
+  const outputs = {};
+
+  const allText = messages
+    .map(m => m.description || "")
+    .join("\n");
+
+  function getValue(name) {
+
+    const regex = new RegExp(
+      `${name}\\s*=\\s*(.+)`
+    );
+
+    const match = allText.match(regex);
+
+    return match
+      ? match[1].trim()
+      : "";
+  }
+
+  outputs.output_operation =
+    getValue("output_operation");
+
+  outputs.output_item_id =
+    getValue("output_item_id");
+
+  outputs.output_item_url =
+    getValue("output_item_url");
+
+  outputs.output_layer_url =
+    getValue("output_layer_url");
+
+  outputs.output_summary =
+    getValue("output_summary");
+
+  return outputs;
+}
+  
   async function uploadSourceItem(file) {
     const form = new FormData();
     
