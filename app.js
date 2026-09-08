@@ -164,18 +164,26 @@ initializeAuthentication();
 
       setStatus(`Web tool job submitted: ${submit.jobId}`, "info");
       const completedJob = await waitForJob(submit.jobId);
-      const outputs = await readJobOutputs(submit.jobId, completedJob);
+if (deleteSource.checked) {
 
-      console.log(
-        "OUTPUTS RETURNED",
-      JSON.stringify(outputs, null, 2)
-    );
+  setStatus(
+    "Notebook completed. Deleting temporary TIFF item...",
+    "info"
+  );
 
-      if (deleteSource.checked) {
-        setStatus("Publishing succeeded. Deleting the temporary TIFF source item...", "info");
-        await deletePortalItem(sourceItemId);
-        sourceItemId = null;
-      }
+  await deletePortalItem(sourceItemId);
+
+  sourceItemId = null;
+}
+
+const outputs = extractOutputsFromMessages(
+  completedJob.messages || []
+);
+
+console.log(
+  "OUTPUTS RETURNED",
+  JSON.stringify(outputs, null, 2)
+);
 
       renderOutputs(outputs);
       setStatus(outputs.output_summary || "TIFF published successfully.", "success", outputs);
