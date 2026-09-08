@@ -164,7 +164,8 @@ initializeAuthentication();
 
       setStatus(`Web tool job submitted: ${submit.jobId}`, "info");
       const completedJob = await waitForJob(submit.jobId);
-if (deleteSource.checked) {
+
+      if (deleteSource.checked) {
 
   setStatus(
     "Notebook completed. Deleting temporary TIFF item...",
@@ -175,6 +176,15 @@ if (deleteSource.checked) {
 
   sourceItemId = null;
 }
+
+const outputs = extractOutputsFromMessages(
+  completedJob.messages || []
+);
+
+console.log(
+  "OUTPUTS RETURNED",
+  JSON.stringify(outputs, null, 2)
+);
 
 const outputs = extractOutputsFromMessages(
   completedJob.messages || []
