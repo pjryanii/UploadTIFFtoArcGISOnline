@@ -285,163 +285,83 @@ form.append(
   const outputs = {};
   const results = job.results || {};
 
-  const taskUrl = stripSlash(config.webToolUrl);
-
   const jobUrl =
-    `${taskUrl}/jobs/${encodeURIComponent(jobId)}`;
+    `${stripSlash(config.webToolUrl)}/jobs/` +
+    `${encodeURIComponent(jobId)}`;
 
-  console.log("Completed job response:", job);
   console.log("Completed job results:", results);
-  console.log("Job URL:", jobUrl);
 
   for (const [name, resultInfo] of Object.entries(results)) {
-    try {
-      console.log(
-        `Processing output "${name}":`,
-        resultInfo
+    /*
+     * If ArcGIS returned an error for the output parameter,
+     * report it directly. Do not treat the error object as a URL.
+     */
+    if (resultInfo?.error) {
+      const message =
+        resultInfo.error.message ||
+        JSON.stringify(resultInfo.error);
+
+      throw new Error(
+        `Web tool output "${name}" failed: ${message}`
       );
-
-      /*
-       * Some Notebook Web Tool responses include the output value
-       * directly in the completed job response.
-       */
-      if (
-        resultInfo &&
-        Object.prototype.hasOwnProperty.call(
-          resultInfo,
-          "value"
-        )
-      ) {
-        outputs[name] = resultInfo.value;
-
-        console.log(
-          `Used inline value for "${name}":`,
-          resultInfo.value
-        );
-
-        continue;
-      }
-
-      /*
-       * Obtain the result path returned by ArcGIS.
-       */
-      let paramUrl = "";
-
-      if (
-        resultInfo &&
-        typeof resultInfo.paramUrl === "string"
-      ) {
-        paramUrl = resultInfo.paramUrl.trim();
-      }
-
-      let resultUrl = "";
-
-      /*
-       * If ArcGIS returned an absolute URL, use it unchanged.
-       */
-      if (/^https?:\/\//i.test(paramUrl)) {
-        resultUrl = paramUrl;
-      }
-
-      /*
-       * A normal GP job paramUrl resembles:
-       *
-       * results/output_summary
-       */
-      else if (paramUrl) {
-        const cleanParamUrl =
-          paramUrl.replace(/^\/+/, "");
-
-        resultUrl =
-          `${jobUrl}/${cleanParamUrl}`;
-      }
-
-      /*
-       * Only use the standard result endpoint as a fallback.
-       */
-      else {
-        resultUrl =
-          `${jobUrl}/results/${encodeURIComponent(name)}`;
-      }
-
-      console.log(
-        `Resolved result URL for "${name}":`,
-        resultUrl
-      );
-
-      const body = new URLSearchParams();
-
-      body.append("f", "json");
-      body.append("token", credential.token);
-
-      const response = await fetch(
-        resultUrl,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/x-www-form-urlencoded;charset=UTF-8"
-          },
-          body: body.toString()
-        }
-      );
-
-      const responseText = await response.text();
-
-      console.log(
-        `Raw result response for "${name}":`,
-        responseText
-      );
-
-      let responseJson;
-
-      try {
-        responseJson = JSON.parse(responseText);
-      } catch {
-        throw new Error(
-          `ArcGIS returned a non-JSON response. ` +
-          `HTTP status: ${response.status}. ` +
-          `Response: ${responseText}`
-        );
-      }
-
-      if (!response.ok || responseJson.error) {
-        throw new Error(
-          responseJson.error?.message ||
-          `HTTP ${response.status}: ${responseText}`
-        );
-      }
-
-      if (
-        Object.prototype.hasOwnProperty.call(
-          responseJson,
-          "value"
-        )
-      ) {
-        outputs[name] = responseJson.value;
-      } else {
-        outputs[name] = responseJson;
-      }
-    } catch (error) {
-      console.error(
-        `Unable to process output "${name}":`,
-        error
-      );
-
-      outputs[name] = {
-        error: {
-          message:
-            `Unable to process output parameter ` +
-            `"${name}": ${normalizeError(error)}`
-        }
-      };
     }
-  }
 
-  console.log(
-    "Final Notebook Web Tool outputs:",
-    outputs
-  );
+    /*
+     * Some responses include the output directly.
+     */
+    if (
+      resultInfo &&
+      Object.prototype.hasOwnProperty.call(
+        resultInfo,
+        "value"
+      )
+    ) {
+      outputs[name] = resultInfo.value;
+      continue;
+    }
+
+    /*
+     * Otherwise use the paramUrl returned by ArcGIS.
+     */
+    const relativePath =
+      typeof resultInfo?.paramUrl === "string"
+        ? resultInfo.paramUrl.replace(/^\/+/, "")
+        : `results/${encodeURIComponent(name)}`;
+
+    const resultUrl =
+      `${jobUrl}/${relativePath}`;
+
+    console.log(
+      `Reading "${name}" from:`,
+      resultUrl
+    );
+
+    const response = await postForm(
+      resultUrl,
+      {
+        f: "json",
+        token: credential.token
+      }
+    );
+
+    if (response.error) {
+      throw new Error(
+        `Unable to read output "${name}": ` +
+        (
+          response.error.message ||
+          JSON.stringify(response.error)
+        )
+      );
+    }
+
+    outputs[name] =
+      Object.prototype.hasOwnProperty.call(
+        response,
+        "value"
+      )
+        ? response.value
+        : response;
+  }
 
   return outputs;
 }
