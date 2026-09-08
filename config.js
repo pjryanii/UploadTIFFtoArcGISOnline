@@ -10,7 +10,7 @@ window.APP_CONFIG = {
   portalUrl: "https://lo-doun.maps.arcgis.com",
 
   // Must match the Notebook Web Tool input variable name.
-  webToolFileParameter: "input_tif_file",
+  webToolFileParameter: "input_tif_item_id",
 
   // Polling interval for asynchronous jobs.
   pollIntervalMs: 2000,
