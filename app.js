@@ -232,18 +232,35 @@ form.append(
     return json;
   }
 
-  async function submitWebTool(sourceItemId) {
-    const itemUrl =
-  `${config.portalUrl}/sharing/rest/content/items/${sourceItemId}`;
+async function submitWebTool(sourceItemId) {
 
-query[
-  config.webToolFileParameter
-] = sourceItemId;
-    
-    const response = await postForm(`${stripSlash(config.webToolUrl)}/submitJob`, query);
-    if (response.error) throw new Error(response.error.message || JSON.stringify(response.error));
-    return response;
+  const query = {
+    f: "json",
+    token: credential.token
+  };
+
+  query[config.webToolFileParameter] = sourceItemId;
+
+  console.log(
+    "SUBMIT JOB PAYLOAD:",
+    JSON.stringify(query, null, 2)
+  );
+
+  const response = await postForm(
+    `${stripSlash(config.webToolUrl)}/submitJob`,
+    query
+  );
+
+  if (response.error) {
+    throw new Error(
+      response.error.message ||
+      JSON.stringify(response.error)
+    );
   }
+
+  return response;
+}
+`
 
   async function waitForJob(jobId) {
     const jobUrl = `${stripSlash(config.webToolUrl)}/jobs/${encodeURIComponent(jobId)}`;
