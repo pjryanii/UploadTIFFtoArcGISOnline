@@ -166,6 +166,11 @@ initializeAuthentication();
       const completedJob = await waitForJob(submit.jobId);
       const outputs = await readJobOutputs(submit.jobId, completedJob);
 
+      console.log(
+        "OUTPUTS RETURNED",
+      JSON.stringify(outputs, null, 2)
+    );
+
       if (deleteSource.checked) {
         setStatus("Publishing succeeded. Deleting the temporary TIFF source item...", "info");
         await deletePortalItem(sourceItemId);
@@ -249,9 +254,15 @@ form.append(
       setStatus(`Web tool status: ${status}${messages.length ? `\n${messages[messages.length - 1]}` : ""}`, "info");
 
       if (status === "esriJobSucceeded") {
+
   console.log(
     "COMPLETE JOB JSON",
     JSON.stringify(job, null, 2)
+  );
+
+  console.log(
+    "COMPLETE JOB OBJECT",
+    job
   );
 
   return job;
