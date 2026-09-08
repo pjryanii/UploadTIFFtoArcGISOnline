@@ -260,7 +260,6 @@ async function submitWebTool(sourceItemId) {
 
   return response;
 }
-`
 
   async function waitForJob(jobId) {
     const jobUrl = `${stripSlash(config.webToolUrl)}/jobs/${encodeURIComponent(jobId)}`;
