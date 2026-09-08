@@ -259,13 +259,93 @@ form.append(
   async function readJobOutputs(jobId, job) {
     const outputs = {};
     const results = job.results || {};
-    for (const name of Object.keys(results)) {
-      const resultUrl = `${stripSlash(config.webToolUrl)}/jobs/${encodeURIComponent(jobId)}/results/${encodeURIComponent(name)}`;
-      const response = await getJson(resultUrl, { f: "json", token: credential.token });
-      outputs[name] = response.value ?? response;
+
+  const jobUrl =
+    `${stripSlash(config.webToolUrl)}/jobs/` +
+    `${encodeURIComponent(jobId)}`;
+
+  console.log("Completed job response:", job);
+  console.log("Available job results:", results);
+
+  for (const [name, resultInfo] of Object.entries(results)) {
+    try {
+      console.log(`Reading output parameter: ${name}`, resultInfo);
+
+      let resultUrl;
+
+      /*
+       * ArcGIS normally provides a relative paramUrl such as:
+       *
+       * results/output_summary
+       *
+       * Use that value rather than reconstructing the URL from the
+       * parameter name.
+       */
+      if (
+        resultInfo &&
+        typeof resultInfo.paramUrl === "string" &&
+        resultInfo.paramUrl.trim()
+      ) {
+        resultUrl = new URL(
+          resultInfo.paramUrl,
+          `${jobUrl}/`
+        ).href;
+      } else {
+        /*
+         * Fallback for job responses that do not provide paramUrl.
+         */
+        resultUrl =
+          `${jobUrl}/results/${encodeURIComponent(name)}`;
+      }
+
+      console.log(
+        `Requesting output parameter "${name}" from:`,
+        resultUrl
+      );
+
+      const response = await getJson(resultUrl, {
+        f: "json",
+        token: credential.token
+      });
+
+      console.log(
+        `Output response for "${name}":`,
+        response
+      );
+
+      if (response.error) {
+        const errorMessage =
+          response.error.message ||
+          JSON.stringify(response.error);
+
+        throw new Error(
+          `Unable to read output parameter "${name}": ` +
+          errorMessage
+        );
+      }
+
+      outputs[name] =
+        Object.prototype.hasOwnProperty.call(response, "value")
+          ? response.value
+          : response;
+    } catch (error) {
+      console.error(
+        `Failed to read output parameter "${name}".`,
+        error
+      );
+
+      outputs[name] = {
+        error: {
+          message: normalizeError(error)
+        }
+      };
     }
-    return outputs;
   }
+
+  console.log("Final web tool outputs:", outputs);
+
+  return outputs;
+}
 
   async function deletePortalItem(itemId) {
     const url = `${config.portalUrl}/sharing/rest/content/users/${encodeURIComponent(portal.user.username)}/items/${encodeURIComponent(itemId)}/delete`;
