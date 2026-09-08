@@ -233,7 +233,15 @@ form.append(
   }
 
   async function submitWebTool(sourceItemId) {
-    const inputValue = JSON.stringify({ itemId: sourceItemId });
+    const itemUrl =
+  `${config.portalUrl}/sharing/rest/content/items/${sourceItemId}`;
+
+const inputValue = JSON.stringify({
+  url: itemUrl
+});
+
+   console.log("INPUT VALUE", inputValue);
+    
     const query = {
       f: "json",
       token: credential.token
