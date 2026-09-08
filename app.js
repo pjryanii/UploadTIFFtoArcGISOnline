@@ -29,21 +29,21 @@ require([
     appId: config.clientId,
     portalUrl: config.portalUrl,
     popup: true,
-    flowType: "authorization-code",
-    popupCallbackUrl:
-      window.location.origin +
-      "/UploadTIFFtoArcGISOnline/oauth-callback.html"
-  });
-  esriId.registerOAuthInfos([oauthInfo]);
+    flowType: "auto",
+    popupCallbackUrl: new URL(
+      "oauth-callback.html",
+      window.location.href
+    ).href
+});
 
-  signInButton.addEventListener("click", () => signIn());
-  signOutButton.addEventListener("click", signOut);
-  publishButton.addEventListener("click", publishWorkflow);
-  fileInput.addEventListener("change", onFileSelected);
+esriId.registerOAuthInfos([oauthInfo]);
 
-  esriId.checkSignInStatus(`${config.portalUrl}/sharing`)
-    .then(() => signIn(false))
-    .catch(() => setSignedOut());
+signInButton.addEventListener("click", () => signIn());
+signOutButton.addEventListener("click", signOut);
+publishButton.addEventListener("click", publishWorkflow);
+fileInput.addEventListener("change", onFileSelected);
+
+initializeAuthentication();
 
   function assertConfigured() {
     const missing = [];
@@ -54,22 +54,49 @@ require([
     }
   }
 
-  async function signIn(prompt = true) {
-    try {
-      credential = prompt
-        ? await esriId.getCredential(`${config.portalUrl}/sharing`, { oAuthPopupConfirmation: false })
-        : await esriId.findCredential(config.portalUrl);
-      if (!credential) credential = await esriId.getCredential(`${config.portalUrl}/sharing`);
+  async function signIn() {
+  const sharingUrl = `${config.portalUrl}/sharing`;
 
-      portal = new Portal({ url: config.portalUrl, authMode: "immediate" });
-      await portal.load();
-      setSignedIn();
-      setStatus(`Signed in as ${portal.user.fullName || portal.user.username}. Choose a TIFF.`, "success");
-    } catch (error) {
-      setSignedOut();
-      setStatus(normalizeError(error), "error", error);
+  try {
+    setStatus("Opening ArcGIS Online sign-in...", "info");
+
+    credential = await esriId.getCredential(sharingUrl, {
+      oAuthPopupConfirmation: false
+    });
+
+    portal = new Portal({
+      url: config.portalUrl,
+      authMode: "immediate"
+    });
+
+    await portal.load();
+
+    setSignedIn();
+
+    setStatus(
+      `Signed in as ${
+        portal.user.fullName || portal.user.username
+      }. Choose a TIFF.`,
+      "success"
+    );
+  } catch (error) {
+    portal = null;
+    credential = null;
+    setSignedOut();
+
+    const message = normalizeError(error);
+
+    if (
+      message.toLowerCase().includes("cancel") ||
+      message.toLowerCase().includes("closed")
+    ) {
+      setStatus("Sign-in was cancelled.", "info");
+    } else {
+      setStatus(message, "error", error);
     }
   }
+}
+
 
   function signOut() {
     esriId.destroyCredentials();
