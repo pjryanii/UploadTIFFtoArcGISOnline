@@ -266,83 +266,148 @@ form.append(
     `${taskUrl}/jobs/${encodeURIComponent(jobId)}`;
 
   console.log("Completed job response:", job);
-  console.log("Available job results:", results);
-  console.log("Task URL:", taskUrl);
+  console.log("Completed job results:", results);
   console.log("Job URL:", jobUrl);
 
   for (const [name, resultInfo] of Object.entries(results)) {
-    let resultUrl = "";
-
     try {
-      /*
-       * Build the documented GP result endpoint directly.
-       *
-       * Example:
-       * <task-url>/jobs/<job-id>/results/output_summary
-       */
-      resultUrl =
-        `${jobUrl}/results/${encodeURIComponent(name)}`;
-
       console.log(
-        `Result metadata for "${name}":`,
+        `Processing output "${name}":`,
         resultInfo
       );
 
+      /*
+       * Some Notebook Web Tool responses include the output value
+       * directly in the completed job response.
+       */
+      if (
+        resultInfo &&
+        Object.prototype.hasOwnProperty.call(
+          resultInfo,
+          "value"
+        )
+      ) {
+        outputs[name] = resultInfo.value;
+
+        console.log(
+          `Used inline value for "${name}":`,
+          resultInfo.value
+        );
+
+        continue;
+      }
+
+      /*
+       * Obtain the result path returned by ArcGIS.
+       */
+      let paramUrl = "";
+
+      if (
+        resultInfo &&
+        typeof resultInfo.paramUrl === "string"
+      ) {
+        paramUrl = resultInfo.paramUrl.trim();
+      }
+
+      let resultUrl = "";
+
+      /*
+       * If ArcGIS returned an absolute URL, use it unchanged.
+       */
+      if (/^https?:\/\//i.test(paramUrl)) {
+        resultUrl = paramUrl;
+      }
+
+      /*
+       * A normal GP job paramUrl resembles:
+       *
+       * results/output_summary
+       */
+      else if (paramUrl) {
+        const cleanParamUrl =
+          paramUrl.replace(/^\/+/, "");
+
+        resultUrl =
+          `${jobUrl}/${cleanParamUrl}`;
+      }
+
+      /*
+       * Only use the standard result endpoint as a fallback.
+       */
+      else {
+        resultUrl =
+          `${jobUrl}/results/${encodeURIComponent(name)}`;
+      }
+
       console.log(
-        `Requesting output "${name}" from:`,
+        `Resolved result URL for "${name}":`,
         resultUrl
       );
 
-      /*
-       * Use POST instead of esriRequest or getJson.
-       * The application's postForm helper is already used
-       * successfully for submitJob and item deletion.
-       */
-      const response = await postForm(
+      const body = new URLSearchParams();
+
+      body.append("f", "json");
+      body.append("token", credential.token);
+
+      const response = await fetch(
         resultUrl,
         {
-          f: "json",
-          token: credential.token
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/x-www-form-urlencoded;charset=UTF-8"
+          },
+          body: body.toString()
         }
       );
 
+      const responseText = await response.text();
+
       console.log(
-        `Raw response for "${name}":`,
-        response
+        `Raw result response for "${name}":`,
+        responseText
       );
 
-      if (response.error) {
+      let responseJson;
+
+      try {
+        responseJson = JSON.parse(responseText);
+      } catch {
         throw new Error(
-          response.error.message ||
-          JSON.stringify(response.error)
+          `ArcGIS returned a non-JSON response. ` +
+          `HTTP status: ${response.status}. ` +
+          `Response: ${responseText}`
+        );
+      }
+
+      if (!response.ok || responseJson.error) {
+        throw new Error(
+          responseJson.error?.message ||
+          `HTTP ${response.status}: ${responseText}`
         );
       }
 
       if (
         Object.prototype.hasOwnProperty.call(
-          response,
+          responseJson,
           "value"
         )
       ) {
-        outputs[name] = response.value;
+        outputs[name] = responseJson.value;
       } else {
-        outputs[name] = response;
+        outputs[name] = responseJson;
       }
     } catch (error) {
       console.error(
-        `Unable to read output parameter "${name}".`,
-        {
-          resultUrl: resultUrl,
-          error: error
-        }
+        `Unable to process output "${name}":`,
+        error
       );
 
       outputs[name] = {
         error: {
           message:
-            `Unable to read output parameter "${name}". ` +
-            `Request URL: ${resultUrl}. ` +
-            `Error: ${normalizeError(error)}`
+            `Unable to process output parameter ` +
+            `"${name}": ${normalizeError(error)}`
         }
       };
     }
