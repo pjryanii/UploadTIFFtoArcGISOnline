@@ -248,7 +248,14 @@ form.append(
       const messages = (job.messages || []).map(m => m.description).filter(Boolean);
       setStatus(`Web tool status: ${status}${messages.length ? `\n${messages[messages.length - 1]}` : ""}`, "info");
 
-      if (status === "esriJobSucceeded") return job;
+      if (status === "esriJobSucceeded") {
+  console.log(
+    "COMPLETE JOB JSON",
+    JSON.stringify(job, null, 2)
+  );
+
+  return job;
+}
       if (["esriJobFailed", "esriJobCancelled", "esriJobTimedOut"].includes(status)) {
         throw new Error(messages.join("\n") || `Web tool ended with status ${status}.`);
       }
