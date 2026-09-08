@@ -173,7 +173,32 @@ initializeAuthentication();
       }
 
       renderOutputs(outputs);
-      setStatus(outputs.output_summary || "TIFF published successfully.", "success", outputs);
+
+let summaryMessage =
+  "TIFF publishing completed successfully.";
+
+let summaryType = "success";
+
+if (
+  typeof outputs.output_summary === "string" &&
+  outputs.output_summary.trim()
+) {
+  summaryMessage =
+    outputs.output_summary.trim();
+} else if (
+  outputs.output_summary?.error?.message
+) {
+  summaryMessage =
+    outputs.output_summary.error.message;
+
+  summaryType = "error";
+}
+
+setStatus(
+  summaryMessage,
+  summaryType,
+  outputs
+);
       fileInput.value = "";
     } catch (error) {
       setStatus(normalizeError(error), "error", error);
