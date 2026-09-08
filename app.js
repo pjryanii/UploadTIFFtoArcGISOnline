@@ -259,78 +259,58 @@ form.append(
   async function readJobOutputs(jobId, job) {
     const outputs = {};
     const results = job.results || {};
-
-  const jobUrl =
-    `${stripSlash(config.webToolUrl)}/jobs/` +
-    `${encodeURIComponent(jobId)}`;
+  
+    const jobUrl =
+      `${stripSlash(config.webToolUrl)}/jobs/` +
+      `${encodeURIComponent(jobId)}`;
 
   console.log("Completed job response:", job);
   console.log("Available job results:", results);
+  console.log("Web tool URL:", config.webToolUrl);
+  console.log("Job URL:", jobUrl);
 
   for (const [name, resultInfo] of Object.entries(results)) {
     try {
-      console.log(`Reading output parameter: ${name}`, resultInfo);
-
-      let resultUrl;
-
       /*
-       * ArcGIS normally provides a relative paramUrl such as:
+       * ArcGIS GP result endpoint:
        *
-       * results/output_summary
+       * <job-url>/results/<parameter-name>
        *
-       * Use that value rather than reconstructing the URL from the
-       * parameter name.
+       * Build it directly instead of using new URL().
        */
-      if (
-        resultInfo &&
-        typeof resultInfo.paramUrl === "string" &&
-        resultInfo.paramUrl.trim()
-      ) {
-        resultUrl = new URL(
-          resultInfo.paramUrl,
-          `${jobUrl}/`
-        ).href;
-      } else {
-        /*
-         * Fallback for job responses that do not provide paramUrl.
-         */
-        resultUrl =
-          `${jobUrl}/results/${encodeURIComponent(name)}`;
-      }
+      const resultUrl =
+        `${jobUrl}/results/${encodeURIComponent(name)}`;
 
-      console.log(
-        `Requesting output parameter "${name}" from:`,
-        resultUrl
-      );
+      console.log(`Result information for "${name}":`, resultInfo);
+      console.log(`Requesting result from: ${resultUrl}`);
 
       const response = await getJson(resultUrl, {
         f: "json",
         token: credential.token
       });
 
-      console.log(
-        `Output response for "${name}":`,
-        response
-      );
+      console.log(`Result response for "${name}":`, response);
 
       if (response.error) {
-        const errorMessage =
-          response.error.message ||
-          JSON.stringify(response.error);
-
         throw new Error(
-          `Unable to read output parameter "${name}": ` +
-          errorMessage
+          response.error.message ||
+          JSON.stringify(response.error)
         );
       }
 
-      outputs[name] =
-        Object.prototype.hasOwnProperty.call(response, "value")
-          ? response.value
-          : response;
+      if (
+        Object.prototype.hasOwnProperty.call(
+          response,
+          "value"
+        )
+      ) {
+        outputs[name] = response.value;
+      } else {
+        outputs[name] = response;
+      }
     } catch (error) {
       console.error(
-        `Failed to read output parameter "${name}".`,
+        `Unable to read output parameter "${name}":`,
         error
       );
 
