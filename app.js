@@ -366,6 +366,35 @@ form.append(
     return response.json();
   }
 
+  async function initializeAuthentication() {
+  const sharingUrl = `${config.portalUrl}/sharing`;
+
+  try {
+    credential = await esriId.checkSignInStatus(sharingUrl);
+
+    portal = new Portal({
+      url: config.portalUrl,
+      authMode: "immediate"
+    });
+
+    await portal.load();
+
+    setSignedIn();
+
+    setStatus(
+      `Signed in as ${
+        portal.user.fullName || portal.user.username
+      }. Choose a TIFF.`,
+      "success"
+    );
+  } catch (error) {
+    portal = null;
+    credential = null;
+    setSignedOut();
+    setStatus("Sign in to begin.", "info");
+  }
+}
+  
   function renderOutputs(outputs) {
     const knownLinks = [
       ["Imagery item", outputs.output_item_url],
