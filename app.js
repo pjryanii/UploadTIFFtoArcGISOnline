@@ -172,9 +172,13 @@ initializeAuthentication();
     "info"
   );
 
-  await deletePortalItem(sourceItemId);
+await deletePortalItem(sourceItemId);
 
-  sourceItemId = null;
+// Remove links to the deleted source item
+resultLinks.innerHTML = "";
+
+sourceItemId = null;
+        
 }
 
 const outputs = extractOutputsFromMessages(
@@ -187,7 +191,8 @@ console.log(
 );
 
       renderOutputs(outputs);
-      setStatus(outputs.output_summary || "TIFF published successfully.", "success", outputs);
+      setStatus(outputs.output_summary || "TIFF published successfully.", "success"
+);
       fileInput.value = "";
     } catch (error) {
       setStatus(normalizeError(error), "error", error);
