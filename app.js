@@ -167,11 +167,9 @@ initializeAuthentication();
       if (deleteSource.checked) {
 
   setStatus(
-    "Notebook completed. Deleting temporary TIFF item...",
+    "Notebook completed. Temporary TIFF item was removed by the Notebook Web Tool.",
     "info"
   );
-
-await deletePortalItem(sourceItemId);
 
 sourceItemId = null;
         
