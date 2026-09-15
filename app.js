@@ -156,8 +156,7 @@ initializeAuthentication();
       setStatus("Uploading the local TIFF to ArcGIS Online content...", "info");
       const uploadResult = await uploadSourceItem(file);
       sourceItemId = uploadResult.id;
-      addLink("Temporary TIFF source item", `${config.portalUrl}/home/item.html?id=${sourceItemId}`);
-
+      
       setStatus("TIFF uploaded. Submitting the Notebook Web Tool...", "info");
       const submit = await submitWebTool(sourceItemId);
       if (!submit.jobId) throw new Error(`Web tool did not return a jobId: ${JSON.stringify(submit)}`);
