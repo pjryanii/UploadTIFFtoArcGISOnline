@@ -418,11 +418,7 @@ async function submitWebTool(sourceItemId) {
 }
   
   function renderOutputs(outputs) {
-    const knownLinks = [
-      ["Imagery item", outputs.output_item_url],
-      ["Imagery service", outputs.output_layer_url]
-    ];
-    knownLinks.forEach(([label, url]) => { if (isHttpUrl(url)) addLink(label, url); });
+    // No output links displayed
   }
 
   function addLink(label, url) {
