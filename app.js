@@ -173,9 +173,6 @@ initializeAuthentication();
 
 await deletePortalItem(sourceItemId);
 
-// Remove links to the deleted source item
-resultLinks.innerHTML = "";
-
 sourceItemId = null;
         
 }
