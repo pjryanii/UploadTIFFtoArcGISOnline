@@ -12,7 +12,6 @@ require([
   const userLabel = document.getElementById("userLabel");
   const fileInput = document.getElementById("fileInput");
   const sourceTitle = document.getElementById("sourceTitle");
-  const deleteSource = document.getElementById("deleteSource");
   const publishButton = document.getElementById("publishButton");
   const progress = document.getElementById("progress");
   const statusNode = document.getElementById("status");
@@ -125,7 +124,6 @@ initializeAuthentication();
   function enableForm(enabled) {
     fileInput.disabled = !enabled || busy;
     sourceTitle.disabled = !enabled || busy;
-    deleteSource.disabled = !enabled || busy;
     publishButton.disabled = !enabled || busy || fileInput.files.length !== 1;
   }
 
@@ -164,19 +162,15 @@ initializeAuthentication();
       setStatus(`Web tool job submitted: ${submit.jobId}`, "info");
       const completedJob = await waitForJob(submit.jobId);
 
-      if (deleteSource.checked) {
-
-  setStatus(
-    "Notebook completed. Temporary TIFF item was removed by the Notebook Web Tool.",
-    "info"
-  );
-
 sourceItemId = null;
-        
-}
 
 const outputs = extractOutputsFromMessages(
   completedJob.messages || []
+);
+
+setStatus(
+  "Notebook completed successfully. The uploaded TIFF was automatically removed.",
+  "success"
 );
 
 console.log(
@@ -188,12 +182,37 @@ console.log(
       setStatus(outputs.output_summary || "TIFF published successfully.", "success"
 );
       fileInput.value = "";
-    } catch (error) {
-      setStatus(normalizeError(error), "error", error);
-      if (sourceItemId) {
-        addLink("Uploaded TIFF source item retained for troubleshooting", `${config.portalUrl}/home/item.html?id=${sourceItemId}`);
-      }
-    } finally {
+} catch (error) {
+
+  console.error(
+    "PUBLISH WORKFLOW ERROR",
+    error
+  );
+
+  console.error(
+    "ERROR STACK",
+    error?.stack
+  );
+
+  console.error(
+    "SOURCE ITEM ID",
+    sourceItemId
+  );
+
+  setStatus(
+    normalizeError(error),
+    "error",
+    error
+  );
+
+  if (sourceItemId) {
+    addLink(
+      "Uploaded TIFF source item retained for troubleshooting",
+      `${config.portalUrl}/home/item.html?id=${sourceItemId}`
+    );
+  }
+
+} finally {
       setBusy(false);
     }
   }
